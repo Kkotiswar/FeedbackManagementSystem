@@ -2,10 +2,11 @@ const db = require("../models");
 const ROLES = db.ROLES;
 const User = db.user;
 
+// Middleware function to check for duplicate username or email
 checkDuplicateUsernameOrEmail = (req, res, next) => {
-  // Username
+  // Check if the email is already in use
   User.findOne({
-    username: req.body.username
+    email: req.body.email
   }).exec((err, user) => {
     if (err) {
       res.status(500).send({ message: err });
@@ -13,29 +14,16 @@ checkDuplicateUsernameOrEmail = (req, res, next) => {
     }
 
     if (user) {
-      res.status(400).send({ message: "Failed! Username is already in use!" });
+      res.status(400).send({ message: "Failed! Email is already in use!" });
       return;
     }
 
-    // Email
-    User.findOne({
-      email: req.body.email
-    }).exec((err, user) => {
-      if (err) {
-        res.status(500).send({ message: err });
-        return;
-      }
-
-      if (user) {
-        res.status(400).send({ message: "Failed! Email is already in use!" });
-        return;
-      }
-
-      next();
-    });
+    // Continue to the next middleware if the email is not in use
+    next();
   });
 };
 
+// Middleware function to check if specified roles exist
 checkRolesExisted = (req, res, next) => {
   if (req.body.roles) {
     for (let i = 0; i < req.body.roles.length; i++) {
@@ -48,12 +36,15 @@ checkRolesExisted = (req, res, next) => {
     }
   }
 
+  // Continue to the next middleware if roles are valid
   next();
 };
 
+// Object containing the middleware functions
 const verifySignUp = {
   checkDuplicateUsernameOrEmail,
   checkRolesExisted
 };
 
+// Export the verifySignUp object
 module.exports = verifySignUp;
